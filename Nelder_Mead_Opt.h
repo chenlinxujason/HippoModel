@@ -28,8 +28,8 @@ void sortSimplex(std::vector<std::vector<double>>& simplex, const std::function<
 // Nelder-Mead algorithm implementation
 std::vector<double> nelderMead(const std::function<double(const std::vector<double>&, bool)>& func,
                                std::vector<std::vector<double>> simplex,
-                               double tolerance = 0.01, // Default tolerance adjusted for example
-                               int maxIterations = 1000) {  // Maximum iterations
+                               double tolerance, // Default tolerance adjusted for example
+                               int maxIterations) {  // Maximum iterations
     const double alpha = 1.4;  // Reflection coefficient
     const double gamma = 2.0;  // Expansion coefficient
     const double rho = 0.5;    // Contraction coefficient

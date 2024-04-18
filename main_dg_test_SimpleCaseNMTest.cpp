@@ -12,7 +12,8 @@
 #include <carlsim.h>
 #include <stopwatch.h>
 
-
+double tolerance = 0.01; // Tolerance for stopping criterion
+int maxIterations = 200; // Maximum number of iterations
 
 double clip(double value, double lowerBound, double upperBound) {
     double clipped = std::max(lowerBound, std::min(value, upperBound));
@@ -62,10 +63,8 @@ int main() {
         {0.0, 0.0},   // Another guess
         {0.1, 7.0}    // And another guess
     };
-    //double tolerance = 1e-6; // Tolerance for stopping criterion
-    //int maxIterations = 200; // Maximum number of iterations
 
-    std::vector<double> optimizedParams = nelderMead(objectiveFunction, initialSimplex);
+    std::vector<double> optimizedParams = nelderMead(objectiveFunction, initialSimplex, tolerance, maxIterations);
 
     std::cout << "Optimized x: " << optimizedParams[0] << std::endl;
     std::cout << "Optimized y: " << optimizedParams[1] << std::endl; // Should be close to 4

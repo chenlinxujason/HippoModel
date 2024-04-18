@@ -26,6 +26,9 @@ SpikeMonitor* spikeMonDGBC = nullptr;
 float targetMeanDGGC = 0.4f;
 float targetMeanDGBC = 20.0f;
 
+double tolerance = 0.01; // Default tolerance adjusted for example
+int maxIterations = 1000;
+
 // Initial weights
 float baselineWts[] = {1.064f, 1.38f, 1.112f, 1.112f, 0.992f, 0.992f};  // Baseline weights - Hippocampome.org
 //float baselineWts[] = {0.001f, 0.02f, 0.5f, 0.5f, 1.1f, 1.1f};  // Baseline weights - fine-tune results
@@ -206,7 +209,7 @@ try {
     sim.runNetwork(10,0);  // Initial transient time
     
     // Run Nelder-Mead optimization with specific simplex
-    std::vector<double> optimizedParams = nelderMead(objectiveFunction, initialSimplex);
+    std::vector<double> optimizedParams = nelderMead(objectiveFunction, initialSimplex, tolerance, maxIterations);
     
     // Run multi-start Nelder-Mead optimization
     //int numStarts = 20; // Number of random starts

@@ -57,7 +57,7 @@ g_syn = zeros(1,n); % g_AMPA + g_NMDA or g_GABAa + g_GABAb
 I_fast = zeros(1,n);% fast neurotransmitter current
 I_slow = zeros(1,n);% slow neurotransmitter current
 I_syn = zeros(1,n); % post-synaptic synaptic current
-% f = 0*vr;
+% f = zeros(1,n);
 
  for i=1:n-1
    % Find STP
@@ -68,8 +68,7 @@ I_syn = zeros(1,n); % post-synaptic synaptic current
     g_fast(i+1)=g_fast(i)+step*(((-g_fast(i)/tau_fast))+w_fast*A*U1(i+1)*x(i)*spike_trains(i+1));%synaptic weight w=1
     g_slow(i+1)=g_slow(i)+step*(((-g_slow(i)/tau_slow))+w_slow*A*U1(i+1)*x(i)*spike_trains(i+1));%synaptic weight w=1
     g_syn(i+1)=g_fast(i+1)+g_slow(i+1); 
- end
- 
+ end 
  
  switch Integrator 
      case 1
@@ -103,8 +102,8 @@ I_syn = zeros(1,n); % post-synaptic synaptic current
          K4=(k*((v(i)+K3*step)-vr)*((v(i)+K3*step)-vt)-u(i)+I(i)+I_syn(i))/C;
 
          v(i+1)=v(i)+(step/6)*(K1+2*K2+2*K3+K4);
-         u(i+1)=u(i)+step*(a*(b*(v(i)-vr)-u(i)));
-         %u(i+1)=u(i)+(step/6)*(K1_U+2*K2_U+2*K3_U+K4_U); 
+         u(i+1)=u(i)+step*(a*(b*(v(i)-vr)-u(i)));% CARLsim use Euler method for u variable
+%          u(i+1)=u(i)+(step/6)*(K1_U+2*K2_U+2*K3_U+K4_U); 
               
            if v(i+1)>= vpeak
               v(i)=vpeak;

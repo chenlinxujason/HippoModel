@@ -1,5 +1,5 @@
 function [v,u,spikes,I] = izhikevich_presynaptic_neuron(Integrator,amp,C,vr,vt,k,vpeak,...
-a,b,c,d,T,step,PulseWidth)
+a,b,c,d,T,step,PulseStart,PulseEnd)
 % Integrator: set integration method. Integrator=1: Euler | Integrator=2: Runge Kutta
 
 % amp: external stimulation current amplitude of presynaptic neuron (pA)
@@ -9,10 +9,16 @@ a,b,c,d,T,step,PulseWidth)
 
 n = round(T/step); % simulation time steps
 iteration_times = 1/step;
-I = [zeros(1,int32((1-PulseWidth)*n)),amp*ones(1,int32(PulseWidth*n))]; % stimulation current
+
+%I = [zeros(1,int32((1-PulseWidth)*n)),amp*ones(1,int32(PulseWidth*n))]; % stimulation current
+I = zeros(1,n); 
+PulseStartIndex = round(PulseStart/step) + 1; % Index for pulse start
+PulseEndIndex = round(PulseEnd/step); % Index for pulse end
+I(PulseStartIndex:PulseEndIndex) = amp; % Set pulse amplitude
+
 v = vr*ones(1,n); % initial values of membrane potential
-u = 0*vr;  % initial values of recovery
-spikes = 0*vr;  % initial values of spikes 
+u = zeros(1,n);  % initial values of recovery
+spikes = zeros(1,n);  % initial values of spikes 
 
 if Integrator == 1
    

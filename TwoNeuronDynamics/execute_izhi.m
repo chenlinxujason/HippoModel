@@ -10,28 +10,30 @@ disp('For optimizae PSP,presynaptic neuron could be any type since they just pro
 amp1 = 440; %external current at presynaptic neuron, pA
 amp2 = 0; %external current at postsynaptic neuron, pA
 Integrator = 2; % RK method
-T = 1000; %1000ms
+T = 2000; % Total simulation time in ms
 step = 0.1; % ms (0.2ms - iterate 5 times; 0.1ms - iterate 10 times)
 n = round(T/step); % simulation time steps
-PulseWidth = 0.9;
+PulseStart = 100; % Pulse start time in ms
+PulseEnd = 1000; % Pulse end time in ms, must < T
 TTP = 0.1; %time to peak (sec) 0.1: TTP = 100ms; 0.0332: TTP = 33.2ms;0.011 - 11ms
 t = step*(1:n);%correct!
 STP_U = 0.45; % 0.45(STD,only Pyramidal) or 0.15(STF)
 STP_tau_u = 50; % 50ms(STD,only Pyramidal) or 750ms(STF),tau_f,facilitation time constant
 STP_tau_x = 750;  %750 ms(STD,only Pyramidal) or 50ms(STF),tau_d,depression time constant
-% parameter need to be tuned
+I2 = amp2*t;
 tau_fast_init = 5;% initial value of tau_fast, only for tuning
 
-tau_fast = 5;% AMPA decay time, ms，16.9
-tau_slow = 150.0; % NMDA decay time, ms,43.2
-Wt = 1.0; % synaptic weight, 0.214
+tau_fast = 1.87;% AMPA decay time, ms，16.9
+tau_slow = 43.2; % NMDA decay time, ms,43.2
+Wt = 0.227; % synaptic weight, 0.214
 fast_gain = 1.0;% synaptic specific gain factor
-slow_gain = 1.0;% 0.2*fast_gain (CA1)
+slow_gain = 0.1;% 0.2*fast_gain (CA1)
+
 w_fast = Wt.*fast_gain;% actual synpatic weight should be Wt*gain
 w_slow = Wt.*slow_gain;
-I2 = amp2*t;
-targeted_amp = -0.45;%mV
-targeted_HHW = 31.6;%ms
+
+targeted_amp = 3.4;%mV
+targeted_HHW = 7.6;%ms
 
 %% presynaptic neuron
 % pre_neuron =  CA1_Pyramidal;
@@ -43,9 +45,9 @@ a1 = 0; b1 = -17.25; c1 = -60.22; d1 = 16;
 % a1 = 0.003; b1 = 24.48; c1 = -66.47; d1 = 50;
 
 %% postsynaptic neuron
-post_neuron = 'RS';
-C2 = 100; vr2 = -60; vt2 = -40; k2 = 0.7; vpeak2 = 35;
-a2 = 0.03; b2 = -2.0; c2 = -50; d2 = 100;
+% post_neuron = 'RS';
+% C2 = 100; vr2 = -60; vt2 = -40; k2 = 0.7; vpeak2 = 35;
+% a2 = 0.03; b2 = -2.0; c2 = -50; d2 = 100;
 
 % DG Granule 
 % C2 = 38; vr2 = -77.4; vt2 = -44.9; k2 = 0.45; vpeak2 = 15.49;
@@ -60,14 +62,14 @@ a2 = 0.03; b2 = -2.0; c2 = -50; d2 = 100;
 % C2 = 382; vr2 = -58.63; vt2 = -42.74; k2 = 0.98; vpeak2 = 38.55;
 % a2 = 0.008; b2 = 12.49; c2 = -34.52; d2 = 138;
 % 
-% post_neuron = 'CA3_Pyramidal(type2,ASP.NASP)';
-% k2=0.54;a2= 0.004;b2= 5.21;d2= 48;C2= 297;vr2= -60.53;
-% vt2= -21.24;vpeak2= 38.02;c2= -36.52;
+post_neuron = 'CA3_Pyramidal(type2,ASP.NASP)';
+k2=0.54;a2= 0.004;b2= 5.21;d2= 48;C2= 297;vr2= -60.53;
+vt2= -21.24;vpeak2= 38.02;c2= -36.52;
 
 % post_neuron = 'CA3_Basket';
 % C2 = 45; vr2 = -57.51; vt2 = -23.38; k2 = 1.0; vpeak2 = 18.45;
 % a2 = 0.004; b2 = 9.26; c2 = -47.56; d2 = -6.0;
-
+% 
 % post_neuron = 'CA3_AAC';% AAC
 % k2=3.96;a2= 0.005;b2= 8.68;d2= 15;C2= 165;
 % vr2= -57.1;vt2= -51.72;vpeak2= 27.8;c2= -73.97;
@@ -75,7 +77,7 @@ a2 = 0.03; b2 = -2.0; c2 = -50; d2 = 100;
 % post_neuron = 'CA3_HAAC';% Horizontal AAC
 % k2=0.63;a2= 0.002;b2= -16.44;d2= 21;C2= 154;
 % vr2= -58.52;vt2= -33.5;vpeak2= 36.09;c2= -38.5;
-
+% 
 % post_neuron = 'CA3_BCCCK';
 % k2=0.58;a2= 0.006;b2= -1.24;d2= 54;C2= 135;vr2= -59;
 % vt2= -39.4;vpeak2= 18.27;c2= -42.77;
@@ -92,9 +94,9 @@ a2 = 0.03; b2 = -2.0; c2 = -50; d2 = 100;
 % k2=0.93;a2= 0;b2= -18.76;d2= 74;C2= 251;vr2= -63.13;vt2= -55.64;
 % vpeak2= 17.01;c2= -52.62;
 
-% post_neuron = 'CA3_TL(modified)';
-% k2=0.93;a2= 0.02;b2= 0.2;d2= 2;C2= 251;vr2= -63.13;vt2= -55.64;
-% vpeak2= 17.01;c2= -52.62;
+% post_neuron = 'CA3_TL(CA1 TL subtype2)';
+% k2=0.52;a2= 0.002;b2= 42.24;d2= -19;C2= 205;vr2= -64.64;vt2= -56.25;
+% vpeak2= 0.17;c2= -60.62;
 
 % post_neuron = 'CA3_TL(CA1 RTL)';
 % k2=2.64;a2= 0.009;b2= 3.59;d2= 2;C2= 227;vr2= -57.87;
@@ -132,11 +134,13 @@ end
 % Check presynaptic input
 [v1,u1,spike_trains1,I1] = ...
 izhikevich_presynaptic_neuron(Integrator,amp1,C1,vr1,vt1,k1,...
-vpeak1,a1,b1,c1,d1,T,step,PulseWidth);
+vpeak1,a1,b1,c1,d1,T,step,PulseStart,PulseEnd);
 
 %% ExecutePostsynaptic neuron
 % Use single spike as input
-spike_amp = (1/step);
+
+spike_amp = (1/step)+0.39;% modified spike to compensate numerical differences
+
 spike_trains1 = [zeros(1,(int32(TTP*n)-1)),spike_amp,...
     zeros(1,int32(n-(TTP)*n))];
 
@@ -145,18 +149,14 @@ izhikevich_postsynaptic_neuron(Integrator,conn_type,spike_trains1,...
 STP_U,STP_tau_u,STP_tau_x,V_rev_fast,V_rev_slow,tau_fast,...
 tau_slow,w_fast,w_slow,C2,vr2,vt2,k2,vpeak2,a2,b2,c2,d2,T,step,I2);
 
-figure(11)
-% v_CARL = xlsread('gain factor check','A3:ALL3');%user define, specify gain=1
-v_CARL = xlsread('gain factor check','A4:ALL4');%user define, not specify gain
-t_carl = 1:1000;
-plot(t_carl,v_CARL,'r','LineWidth',2);
-hold on
-plot(t,v2,'b','LineWidth', 2);
-%% include STDP
-% [v2,u2,U,x,g_fast,g_slow,g_syn,I_fast,I_slow,I_syn,spike_trains2] = ...
-% izhikevich_postsynaptic_neuron_STDP(Integrator,conn_type,spike_trains1,...
-% STP_U,STP_tau_u,STP_tau_x,V_rev_fast,V_rev_slow,tau_fast,...
-% tau_slow,w_fast,w_slow,C2,vr2,vt2,k2,vpeak2,a2,b2,c2,d2,T,step,I2);
+% figure(11)
+% % v_CARL = xlsread('gain factor check','A3:ALL3');%user define, specify gain=1
+% v_CARL = xlsread('gain factor check','A4:ALL4');%user define, not specify gain
+% t_carl = 1:1000;
+% plot(t_carl,v_CARL,'r','LineWidth',2);
+% hold on
+% plot(t,v2,'b','LineWidth', 2);
+
 
 %% HHW
 %%% Find peak value and HHW
@@ -184,19 +184,6 @@ labelText_V = ['PSP=',num2str(targeted_amp),'mV,',...
     'V=',num2str(targeted_V),'mV'];
 labelText_HHW = ['HHW=',num2str(targeted_HHW),'ms'];
 
-%% CARLsim check
-% v2_carl = xlsread('EPSP-DGGC-weight','A1:ALL1');% DG_Granule
-% v2_carl = xlsread('EPSP-DGGC-weight','A2:ALL2');% DG_Basket
-% 
-% sz=6;
-% t_carl = 1:1000;
-% plot(t_carl,v2_carl,'r','LineWidth',2);
-% % scatter(t_carl,v2_carl,sz,'r','filled');
-% hold on
-% plot(t,v2,'b','LineWidth',2);
-% % scatter(t,v2,sz,'b','filled');
-% hold off
-% legend('CARLsim','MATLAB');
 
 %% synaptic gain check
 % v_gain = xlsread('gain factor check','A1:BXX1');% DG Basket

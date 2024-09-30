@@ -1,6 +1,6 @@
 function [v,u,U,x,g_fast,g_slow,g_syn,I_fast,I_slow,I_syn,spikes] = ...
 izhikevich_postsynaptic_neuron(Integrator,conn_type,spike_trains,STP_U,STP_tau_u,...
-STP_tau_x,V_rev_fast,V_rev_slow, tau_fast,tau_slow,w_fast,w_slow,...
+STP_tau_x,V_rev_fast,V_rev_slow,tau_fast,tau_slow,w_fast,w_slow,...
 C,vr,vt,k,vpeak,a,b,c,d,T,step,I)
 
 % This code do not have CARLsim Synaptic Receptor-Specific Gain Factors
@@ -59,15 +59,22 @@ I_slow = zeros(1,n);% slow neurotransmitter current
 I_syn = zeros(1,n); % post-synaptic synaptic current
 % f = zeros(1,n);
 
+NMDAtmp = zeros(1,n);
+
  for i=1:n-1
    % Find STP
     U(i+1)=U(i)+step*((-U(i)/STP_tau_u)+STP_U*(1-U(i))*spike_trains(i+1));
     U1(i+1)=U(i)+STP_U*(1-U(i));
     x(i+1)=x(i)+step*(((1-x(i))/STP_tau_x)-U1(i+1)*x(i)*spike_trains(i+1));
-
-    g_fast(i+1)=g_fast(i)+step*(((-g_fast(i)/tau_fast))+w_fast*A*U1(i+1)*x(i)*spike_trains(i+1));%synaptic weight w=1
-    g_slow(i+1)=g_slow(i)+step*(((-g_slow(i)/tau_slow))+w_slow*A*U1(i+1)*x(i)*spike_trains(i+1));%synaptic weight w=1
-    g_syn(i+1)=g_fast(i+1)+g_slow(i+1); 
+    
+    %% Enable STP
+%     g_fast(i+1)=g_fast(i)+step*(((-g_fast(i)/tau_fast))+w_fast*A*U1(i+1)*x(i)*spike_trains(i+1));%synaptic weight w=1
+%     g_slow(i+1)=g_slow(i)+step*(((-g_slow(i)/tau_slow))+w_slow*A*U1(i+1)*x(i)*spike_trains(i+1));%synaptic weight w=1
+%     
+    %% Disable STP
+   g_fast(i+1)=g_fast(i)+step*((-g_fast(i)/tau_fast))+w_fast*spike_trains(i+1);%synaptic weight w=1
+   g_slow(i+1)=g_slow(i)+step*((-g_slow(i)/tau_slow))+w_slow*spike_trains(i+1);%synaptic weight w=1
+   g_syn(i+1)=g_fast(i+1)+g_slow(i+1); 
  end 
  
  switch Integrator 
@@ -88,7 +95,10 @@ I_syn = zeros(1,n); % post-synaptic synaptic current
          switch conn_type
              case 1 % excitatory - *presynaptic neuron has excitatory synapse
                  I_fast(i+1)=w_fast*g_fast(i+1)*(v(i+1)-V_rev_fast);
-                 I_slow(i+1)=w_slow*g_slow(i+1)*(v(i+1)-V_rev_slow)*(((v(i+1)+80)/60)^2)/(1+(((v(i+1)+80)/60)^2));
+                
+                 NMDAtmp(i+1) = (v(i+1) + 80.0) * (v(i+1) + 80.0) / 60.0 / 60.0;
+                 I_slow(i+1)=w_slow*g_slow(i+1)*(v(i+1)-V_rev_slow)*NMDAtmp(i+1)/(1.0 + NMDAtmp(i+1));
+                 
                  I_syn(i+1)= -(I_fast(i+1)+I_slow(i+1));
              case 2 % inhibitory - *presynaptic neuron has inhibitory synapse
                  I_fast(i+1)=g_fast(i+1)*(v(i+1)-V_rev_fast);

@@ -1,0 +1,257 @@
+# Hippomodel runtime configuration.
+# Region is selected in include/hippomodel/user/ProjectSelection.h.
+# This same file is used by both hippomodel_run and hippomodel_optimize.
+
+# Shared connectivity file for DG, CA3, and CA1.
+[paths]
+connectivity_h5 = "connectivity/CA1EC_scale2_DGMC_scale5_data_divergence_scale10.h5"
+output_dir = "results/refactor_scale10"
+target_psd_file = ""
+
+# Optional region-specific output directories.
+[paths.DG]
+output_dir = "results/refactor_DG_scale10"
+
+[paths.CA3]
+output_dir = "results/refactor_CA3_scale10"
+
+[paths.CA1]
+output_dir = "results/refactor_CA1_scale10"
+
+# Input source options:
+#   mode = "file"    -> use SpikeGeneratorFromFile and the file path below.
+#   mode = "poisson" -> use PoissonRate and rate_hz below.
+# To switch one source from file to Poisson, change only that source's mode/rate/file fields.
+
+[inputs.DG.EC_LEC]
+mode = "file"
+file = "results/spk_EC_LEC.dat"
+# mode = "poisson"
+# rate_hz = 2.1
+
+[inputs.DG.EC_MEC]
+mode = "file"
+file = "results/MEC_66000cells_1200.0sec(mean=2.1Hz,ymax=2.4,60x60cm,non-uniform grid field,d_10,min=0.1Hz)_SimData_MCscale5.dat"
+# mode = "poisson"
+# rate_hz = 2.1
+
+[inputs.CA3.EC_LEC]
+mode = "file"
+file = "results/spk_EC_LEC.dat"
+# mode = "poisson"
+# rate_hz = 2.1
+
+[inputs.CA3.EC_MEC]
+mode = "file"
+file = "results/spk_EC_MEC.dat"
+# mode = "poisson"
+# rate_hz = 2.1
+
+[inputs.CA3.DG_GC]
+mode = "file"
+file = "results/spk_DG_GC.dat"
+# mode = "poisson"
+# rate_hz = 0.66
+
+[inputs.CA1.EC_LEC3]
+mode = "file"
+file = "results/spk_EC_LEC3.dat"
+# mode = "poisson"
+# rate_hz = 2.1
+
+[inputs.CA1.EC_MEC3]
+mode = "file"
+file = "results/spk_EC_MEC3.dat"
+# mode = "poisson"
+# rate_hz = 2.1
+
+[inputs.CA1.CA3_PC]
+mode = "file"
+file = "results/spk_CA3_PC.dat"
+# file = "results/spk_CA3_PC_correct_0.9Hz.dat"
+# mode = "poisson"
+# rate_hz = 0.88
+
+[simulation]
+seed = 42
+num_gpus = 1
+integration_step = 10
+transient_sec = 10
+measurement_sec = 10
+write_spikes = false
+
+[optimizer]
+nm_mode = "GD_full"          # currently supported path: GD_full
+max_iterations = 400
+tolerance_percent = 1.0
+lower_scale = 0.009           # used by DGOptimizationBounds.cpp where original DG code used global lowerScale
+upper_scale = 15.0            # used by DGOptimizationBounds.cpp where original DG code used global upperScale
+
+[loss.weights]
+firing_rate = 4.0
+correlation = 1.0
+oscillation = 1.0
+
+[loss.correlation]
+target_mean_abs_corr = 0.2
+n_slices = 500
+bin_ms = 5
+n_shuffle = 3
+dv_ymin_mm = 0.0
+dv_ymax_mm = 10.0
+
+[loss.oscillation]
+bin_ms = 5
+ref_f1_hz = 1.0
+ref_f2_hz = 60.0
+theta_f1_hz = 4.0
+theta_f2_hz = 9.0
+beta_f1_hz = 10.0
+beta_f2_hz = 20.0
+gamma_f1_hz = 21.0
+gamma_f2_hz = 55.0
+low_f1_hz = 0.0
+low_f2_hz = 2.0
+target_theta = 0.3  # DG/CA1 default; CA3 original used 0.2 but total loss uses beta+gamma by default
+target_beta = 0.3
+target_gamma = 0.3
+target_two_hz = 0.3
+
+[loss.firing_rate.targets]
+DG_GC = 0.66
+DG_MC = 1.6
+DG_BC = 20.0
+DG_AAC = 20.0
+DG_BCCCK = 5.0
+DG_HICAP = 5.0
+DG_HIPP = 20.0
+DG_MOPP = 5.0
+DG_TML = 5.0
+
+# CA3 firing-rate targets from the CA3 NMOpt code.
+CA3_PC = 0.9
+CA3_AAC = 17.58
+CA3_BC = 21.0
+CA3_BCCCK = 2.82
+CA3_BisC = 30.44
+CA3_MFA = 2.82
+CA3_OLM = 6.14
+CA3_TL = 19.5
+
+# CA1 firing-rate targets from the CA1 NMOpt code.
+CA1_PC = 2.6
+CA1_AAC = 7.85
+CA1_BC = 18.1
+CA1_BCCCK = 25.24
+CA1_BisC = 30.42
+CA1_NG = 8.0
+CA1_OLM = 17.3
+CA1_TL = 19.0
+
+[loss.firing_rate.bounds.DG_GC]
+lower = 0.55
+upper = 0.92
+
+[loss.firing_rate.bounds.DG_MC]
+lower = 0.98
+upper = 2.92
+
+[loss.firing_rate.bounds.DG_BC]
+lower = 15.0
+upper = 36.0
+
+[loss.firing_rate.bounds.DG_AAC]
+lower = 15.0
+upper = 36.0
+
+[loss.firing_rate.bounds.DG_BCCCK]
+lower = 1.0
+upper = 8.0
+
+[loss.firing_rate.bounds.DG_HICAP]
+lower = 1.0
+upper = 8.0
+
+[loss.firing_rate.bounds.DG_HIPP]
+lower = 4.0
+upper = 36.0
+
+[loss.firing_rate.bounds.DG_MOPP]
+lower = 4.0
+upper = 25.0
+
+[loss.firing_rate.bounds.DG_TML]
+lower = 4.0
+upper = 25.0
+
+# CA3 firing-rate bounds from the CA3 NMOpt code.
+[loss.firing_rate.bounds.CA3_PC]
+lower = 0.67
+upper = 1.24
+
+[loss.firing_rate.bounds.CA3_AAC]
+lower = 7.63
+upper = 22.0
+
+[loss.firing_rate.bounds.CA3_BC]
+lower = 13.0
+upper = 22.0
+
+[loss.firing_rate.bounds.CA3_BCCCK]
+lower = 1.2
+upper = 8.0
+
+[loss.firing_rate.bounds.CA3_BisC]
+lower = 15.0
+upper = 26.0
+
+[loss.firing_rate.bounds.CA3_MFA]
+lower = 1.2
+upper = 8.0
+
+[loss.firing_rate.bounds.CA3_OLM]
+lower = 4.0
+upper = 25.0
+
+[loss.firing_rate.bounds.CA3_TL]
+lower = 15.0
+upper = 30.5
+
+# CA1 firing-rate bounds from the CA1 NMOpt code.
+[loss.firing_rate.bounds.CA1_PC]
+lower = 2.5
+upper = 3.59
+
+[loss.firing_rate.bounds.CA1_AAC]
+lower = 6.9
+upper = 8.8
+
+[loss.firing_rate.bounds.CA1_BC]
+lower = 10.07
+upper = 26.35
+
+[loss.firing_rate.bounds.CA1_BCCCK]
+lower = 15.3
+upper = 35.18
+
+[loss.firing_rate.bounds.CA1_BisC]
+lower = 18.7
+upper = 55.0
+
+[loss.firing_rate.bounds.CA1_NG]
+lower = 1.0
+upper = 30.44
+
+[loss.firing_rate.bounds.CA1_OLM]
+lower = 15.3
+upper = 22.3
+
+[loss.firing_rate.bounds.CA1_TL]
+lower = 7.0
+upper = 30.0
+
+# Optional fixed scaling factors used only by hippomodel_run.
+# Omitted connections default to 1.0.
+[run.scaling_factors]
+# LEC_DGGC = 1.0
+# MEC_DGGC = 1.0

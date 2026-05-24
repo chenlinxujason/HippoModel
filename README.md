@@ -2,13 +2,7 @@
 
 This project is a refactored CARLsim6 package-style workflow for running and optimizing large-scale hippocampal spiking neuronal network models. CARLsim is the simulator. This project organizes CARLsim model setup, HDF5 connectivity loading, spike input configuration, execution, and Nelder-Mead optimization for DG, CA3, and CA1.
 
-The code is designed so a new user can change common experiment settings from `config/hippomodel.toml`, while region-specific CARLsim model setup remains in explicit C++ files using the original CARLsim API style:
-
-```cpp
-sim.setConductances(...);
-sim.setNeuronParameters(...);
-connectionIDs["..."] = sim.connect(...);
-```
+The code is designed so a new user can change common experiment settings from `config/hippomodel.toml`
 
 ## Project structure
 

@@ -1,43 +1,56 @@
 #include "hippomodel/region/DG/DGOptimizationBounds.h"
+#include "hippomodel/region/DG/DGBaselineWeights.h"
+
+#include <stdexcept>
+#include <string>
 
 namespace hippomodel::DG {
 
 OptimizationBounds makeDGOptimizationBounds(const std::vector<double>& initGuess,
                                             double lowerScale,
                                             double upperScale) {
+    const auto baselineWts = makeDGBaselineWeights();
+    const auto wt = [&](const std::string& name) -> double {
+        const auto it = baselineWts.find(name);
+        if (it == baselineWts.end()) {
+            throw std::runtime_error("Missing DG baseline weight for " + name);
+        }
+        return static_cast<double>(it->second);
+    };
+
     // This function preserves the original DG NM per-connection scaling-factor bounds.
     // The variable names and grouping follow main_largescalemodel_EC_DG_div(NMOpt).cpp.
 
     // ----------------------------------------------------------
     // EC_LEC as PRE (7)  baselineWts[0..6]
     // ----------------------------------------------------------
-    double lowerLECGC     = lowerScale * initGuess[0];  double upperLECGC     = 3.17 / 0.204;// maxWt = 3.18, set 3.17
-    double lowerLECAAC    = lowerScale * initGuess[1];  double upperLECAAC    = 16 / 0.097;// maxWt = 17, set 16
-    double lowerLECBC     = lowerScale * initGuess[2];  double upperLECBC     = 38 / 0.17;// maxWt = 39, set 38
-    double lowerLECCCK    = lowerScale * initGuess[3];  double upperLECCCK    = 30 / 0.1198;// maxWt = 31; set 30
-    double lowerLECHICAP  = lowerScale * initGuess[4];  double upperLECHICAP  = 16 / 0.0451;// maxWt = 17; set 16
-    double lowerLECMOPP   = lowerScale * initGuess[5];  double upperLECMOPP   = 36 / 0.4;// maxWt = 37; set 36
-    double lowerLECTML    = lowerScale * initGuess[6];  double upperLECTML    = 33 / 0.21; // maxWt = 34; set 33
+    double lowerLECGC     = lowerScale * initGuess[0];  double upperLECGC     = 3.17 / wt("LEC_DGGC"); // 3.17/0.408, maxWt to generate AP is 3.17
+    double lowerLECAAC    = lowerScale * initGuess[1];  double upperLECAAC    = 16 / wt("LEC_DGAAC"); // 16/0.097, maxWt to generate AP is 16
+    double lowerLECBC     = lowerScale * initGuess[2];  double upperLECBC     = 38 / wt("LEC_DGBC"); // 38/0.17, maxWt to generate AP is 38
+    double lowerLECCCK    = lowerScale * initGuess[3];  double upperLECCCK    = 30 / wt("LEC_DGBCCCK"); // 30/0.1198, maxWt to generate AP is 30
+    double lowerLECHICAP  = lowerScale * initGuess[4];  double upperLECHICAP  = 16 / wt("LEC_DGHICAP"); // 16/0.0451, maxWt to generate AP is 16
+    double lowerLECMOPP   = lowerScale * initGuess[5];  double upperLECMOPP   = 36 / wt("LEC_DGMOPP"); // 36/0.4, maxWt to generate AP is 36
+    double lowerLECTML    = lowerScale * initGuess[6];  double upperLECTML    = 33 / wt("LEC_DGTML"); // 33/0.21, maxWt to generate AP is 33
 
     // ----------------------------------------------------------
     // EC_MEC as PRE (7)  baselineWts[7..13]
     // ----------------------------------------------------------
-    double lowerMECGC     = lowerScale * initGuess[7];   double upperMECGC     = 3.17 / 0.204;// maxWt = 3.18, set 3.17
-    double lowerMECAAC    = lowerScale * initGuess[8];   double upperMECAAC    = 16 / 0.097;// maxWt = 17, set 16
-    double lowerMECBC     = lowerScale * initGuess[9];   double upperMECBC     = 38 / 0.17;// maxWt = 39, set 38
-    double lowerMECCCK    = lowerScale * initGuess[10];  double upperMECCCK    = 30 / 0.1198;// maxWt = 31; set 30
-    double lowerMECHICAP  = lowerScale * initGuess[11];  double upperMECHICAP  = 16 / 0.0451;// maxWt = 17; set 16
-    double lowerMECMOPP   = lowerScale * initGuess[12];  double upperMECMOPP   = 36 / 0.4;// maxWt = 37; set 36
-    double lowerMECTML    = lowerScale * initGuess[13];  double upperMECTML    = 33 / 0.21; // maxWt = 34; set 33
+    double lowerMECGC     = lowerScale * initGuess[7];   double upperMECGC     = 3.17 / wt("MEC_DGGC"); // 3.17/0.408, maxWt to generate AP is 3.17
+    double lowerMECAAC    = lowerScale * initGuess[8];   double upperMECAAC    = 16 / wt("MEC_DGAAC"); // 16/0.097, maxWt to generate AP is 16
+    double lowerMECBC     = lowerScale * initGuess[9];   double upperMECBC     = 38 / wt("MEC_DGBC"); // 38/0.17, maxWt to generate AP is 38
+    double lowerMECCCK    = lowerScale * initGuess[10];  double upperMECCCK    = 30 / wt("MEC_DGBCCCK"); // 30/0.1198, maxWt to generate AP is 30
+    double lowerMECHICAP  = lowerScale * initGuess[11];  double upperMECHICAP  = 16 / wt("MEC_DGHICAP"); // 16/0.0451, maxWt to generate AP is 16
+    double lowerMECMOPP   = lowerScale * initGuess[12];  double upperMECMOPP   = 36 / wt("MEC_DGMOPP"); // 36/0.4, maxWt to generate AP is 36
+    double lowerMECTML    = lowerScale * initGuess[13];  double upperMECTML    = 33 / wt("MEC_DGTML"); // 33/0.21, maxWt to generate AP is 33
 
     // ----------------------------------------------------------
     // DG_GC as PRE (5)  baselineWts[14..18]
     // ----------------------------------------------------------
-    double lowerGCMC      = lowerScale * initGuess[14];  double upperGCMC      = 120 / 0.932;// maxWt = 121, set 120
-    double lowerGCAAC     = lowerScale * initGuess[15];  double upperGCAAC     = 16 / 0.377;// maxWt = 17, set 16
-    double lowerGCBC      = lowerScale * initGuess[16];  double upperGCBC      = 38 / 0.67;// maxWt = 39, set 38
-    double lowerGCHICAP   = lowerScale * initGuess[17];  double upperGCHICAP   = 16 / 0.1824;// maxWt = 17; set 16
-    double lowerGCHIPP    = lowerScale * initGuess[18];  double upperGCHIPP    = 22 / 0.4328;//maxWt = 24; set 22; GC-HIPP should smaller
+    double lowerGCMC      = lowerScale * initGuess[14];  double upperGCMC      = 120 / wt("DGGC_DGMC"); // 120/0.932, maxWt to generate AP is 120
+    double lowerGCAAC     = lowerScale * initGuess[15];  double upperGCAAC     = 16 / wt("DGGC_DGAAC"); // 16/0.377, maxWt to generate AP is 16
+    double lowerGCBC      = lowerScale * initGuess[16];  double upperGCBC      = 38 / wt("DGGC_DGBC"); // 38/0.67, maxWt to generate AP is 38
+    double lowerGCHICAP   = lowerScale * initGuess[17];  double upperGCHICAP   = 16 / wt("DGGC_DGHICAP"); // 16/0.1824, maxWt to generate AP is 16
+    double lowerGCHIPP    = lowerScale * initGuess[18];  double upperGCHIPP    = 22 / wt("DGGC_DGHIPP"); // 22/0.4328, maxWt to generate AP is 22; GC-HIPP should smaller
 
     // ----------------------------------------------------------
     // DG_MC as PRE (6)  baselineWts[19..24], use smaller upperbound (1.5 or 1.0) for low corr; higher upperbound (3.5) for high corr

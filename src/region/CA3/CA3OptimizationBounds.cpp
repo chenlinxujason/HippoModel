@@ -1,4 +1,8 @@
 #include "hippomodel/region/CA3/CA3OptimizationBounds.h"
+#include "hippomodel/region/CA3/CA3BaselineWeights.h"
+
+#include <stdexcept>
+#include <string>
 
 namespace hippomodel::CA3 {
 
@@ -6,6 +10,15 @@ CA3OptimizationBounds makeCA3OptimizationBounds(
     const std::vector<double>& initGuess,
     double lowerScale,
     double upperScale) {
+    const auto baselineWts = makeCA3BaselineWeights();
+    const auto wt = [&](const std::string& name) -> double {
+        const auto it = baselineWts.find(name);
+        if (it == baselineWts.end()) {
+            throw std::runtime_error("Missing CA3 baseline weight for " + name);
+        }
+        return static_cast<double>(it->second);
+    };
+
     CA3OptimizationBounds bounds;
     bounds.lower = {
         lowerScale * initGuess[0],
@@ -71,26 +84,26 @@ CA3OptimizationBounds makeCA3OptimizationBounds(
         lowerScale * initGuess[60]
     };
     bounds.upper = {
-        7.0 / 0.23,
-        3.3 / 0.211,
-        3.0 / 0.102,
-        7.0 / 0.23,
-        3.3 / 0.211,
-        3.0 / 0.102,
-        5.0 / 1.05,
-        3.3 / 0.41,
-        3.0 / 0.1405,
-        4.7 / 0.1315,
-        3.9 / 0.103,
-        5.9 / 0.1877,
-        0.246 / 0.0492,
-        3.3 / 0.28,
-        3.0 / 0.118,
-        4.7 / 0.364,
-        3.9 / 0.145,
-        5.9 / 0.529,
-        1.7 / 0.112,
-        1.5 / 0.0268,
+        7.0 / wt("LEC_CA3PC"), // 7.0/0.23, maxWt to generate AP is 7.0,
+        3.3 / wt("MEC_CA3PC"), // 3.3/0.23? keep original AP numerator 3.3; denominator now from MEC_CA3PC,
+        3.0 / wt("DGGC_CA3PC"), // 3.0/1.05? denominator from DGGC_CA3PC,
+        7.0 / wt("CA3PC_CA3PC"), // 7.0/0.00246, denominator from CA3PC_CA3PC,
+        3.3 / wt("CA3AAC_CA3PC"), // 3.3/0.848, denominator from CA3AAC_CA3PC,
+        3.0 / wt("CA3BC_CA3PC"), // 3.0/0.848, denominator from CA3BC_CA3PC,
+        5.0 / wt("CA3BCCCK_CA3PC"), // 5.0/0.848, denominator from CA3BCCCK_CA3PC,
+        3.3 / wt("CA3BisC_CA3PC"), // 3.3/0.53, denominator from CA3BisC_CA3PC,
+        3.0 / wt("CA3MFA_CA3PC"), // 3.0/0.848, denominator from CA3MFA_CA3PC,
+        4.7 / wt("CA3OLM_CA3PC"), // 4.7/0.848, denominator from CA3OLM_CA3PC,
+        3.9 / wt("CA3TL_CA3PC"), // 3.9/0.53, denominator from CA3TL_CA3PC,
+        5.9 / wt("LEC_CA3AAC"), // 5.9/0.264, denominator from LEC_CA3AAC,
+        0.246 / wt("MEC_CA3AAC"), // 0.246/0.264, denominator from MEC_CA3AAC,
+        3.3 / wt("DGGC_CA3AAC"), // 3.3/0.82, denominator from DGGC_CA3AAC,
+        3.0 / wt("CA3PC_CA3AAC"), // 3.0/0.35, denominator from CA3PC_CA3AAC,
+        4.7 / wt("CA3BCCCK_CA3AAC"), // 4.7/0.3134, denominator from CA3BCCCK_CA3AAC,
+        3.9 / wt("CA3BisC_CA3AAC"), // 3.9/0.1959, denominator from CA3BisC_CA3AAC,
+        5.9 / wt("CA3OLM_CA3AAC"), // 5.9/0.3134, denominator from CA3OLM_CA3AAC,
+        1.7 / wt("CA3TL_CA3AAC"), // 1.7/0.1959, denominator from CA3TL_CA3AAC,
+        1.5 / wt("LEC_CA3BC"), // 1.5/0.1275, denominator from LEC_CA3BC,
         upperScale * initGuess[20],
         upperScale * initGuess[21],
         upperScale * initGuess[22],

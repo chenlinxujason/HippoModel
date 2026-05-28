@@ -17,20 +17,67 @@
 #include "hippomodel/user/ProjectSelection.h"
 #include "hippomodel/workflow/WorkflowArgs.h"
 
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace hippomodel {
 namespace {
 
+
+bool startsWith(const std::string& s, const std::string& prefix) {
+    return s.size() >= prefix.size() &&
+           std::equal(prefix.begin(), prefix.end(), s.begin());
+}
+
+int findConnectionIndex(
+    const std::vector<std::string>& order,
+    const std::string& name)
+{
+    const auto it = std::find(order.begin(), order.end(), name);
+    if (it == order.end()) return -1;
+    return static_cast<int>(std::distance(order.begin(), it));
+}
+
+std::vector<std::pair<int, int>> makeEcLecMecPairs(
+    const std::vector<std::string>& optimizedConnectionOrder)
+{
+    std::vector<std::pair<int, int>> pairs;
+
+    for (int i = 0; i < static_cast<int>(optimizedConnectionOrder.size()); ++i) {
+        const std::string& lecName = optimizedConnectionOrder[i];
+        std::string mecName;
+
+        if (startsWith(lecName, "LEC_")) {
+            mecName = "MEC_" + lecName.substr(4);
+        } else if (startsWith(lecName, "LEC3_")) {
+            mecName = "MEC3_" + lecName.substr(5);
+        } else {
+            continue;
+        }
+
+        const int mecIdx = findConnectionIndex(optimizedConnectionOrder, mecName);
+        if (mecIdx >= 0) {
+            pairs.push_back({i, mecIdx});  // first = LEC/LEC3 index, second = MEC/MEC3 index
+        }
+    }
+
+    return pairs;
+}
+
 template <typename RegionSpecT>
-void registerEI(const RegionSpecT& spec) {
+void registerEI(const RegionSpecT& spec, const RuntimeConfig& cfg) {
     for (const auto& reg : spec.ei_registrations) {
-        const auto bounds = spec.default_fr_bounds.at(reg.neuron_type);
+        auto bounds = spec.default_fr_bounds.at(reg.neuron_type);
+        const auto cfg_it = cfg.firing_rate_bounds.find(reg.neuron_type);
+        if (cfg_it != cfg.firing_rate_bounds.end()) {
+            bounds = cfg_it->second;
+        }
         ::opt::ProgressiveEI::RegisterNeuronType(reg.neuron_type, bounds.first, bounds.second, reg.exc_indices, reg.inh_indices);
     }
 }
@@ -57,7 +104,11 @@ int runNMForRegion(
     EvaluatorT& evaluator,
     const std::vector<double>& initGuess,
     const std::vector<double>& lowerBounds,
-    const std::vector<double>& upperBounds) {
+    const std::vector<double>& upperBounds,
+    const std::vector<std::string>& optimizedConnectionOrder) {
+
+    const auto ecPairs = makeEcLecMecPairs(optimizedConnectionOrder);
+    const double EC_PAIR_MAX_RATIO = 1.5;
 
     ::opt::ProgressiveEI::SelectReferenceVertex(initGuess);
 
@@ -91,7 +142,9 @@ int runNMForRegion(
             lowerBounds,
             upperBounds,
             stepVerts,
-            stepVals);
+            stepVals,
+            ecPairs,
+            EC_PAIR_MAX_RATIO);
 
         progressiveSimplex.push_back(stepVerts.back());
         initObjValues.push_back(stepVals.back());
@@ -136,39 +189,39 @@ int optimizeWorkflow(int argc, char** argv) {
             logger.reset();
             logger.writeEffectiveConfig(cfg);
             setGlobalOptimizationLogger(&logger);
-            registerEI(spec);
+            registerEI(spec, cfg);
 
             std::vector<double> initGuess(spec.optimized_connection_order.size(), 1.0);
             const auto bounds = DG::makeDGOptimizationBounds(initGuess, cfg.optimizer.lower_scale, cfg.optimizer.upper_scale);
             auto ctx = DG::buildDGNetwork(cfg, initGuess);
             DG::DGEvaluator evaluator(std::move(ctx), &logger);
-            return runNMForRegion("DG", cfg, evaluator, initGuess, bounds.lower, bounds.upper);
+            return runNMForRegion("DG", cfg, evaluator, initGuess, bounds.lower, bounds.upper, spec.optimized_connection_order);
         } else if constexpr (user::kSelectedRegion == Region::CA3) {
             auto spec = CA3::makeCA3RegionSpec();
             OptimizationLogger logger(cfg.paths.output_dir, "CA3", 10);
             logger.reset();
             logger.writeEffectiveConfig(cfg);
             setGlobalOptimizationLogger(&logger);
-            registerEI(spec);
+            registerEI(spec, cfg);
 
             std::vector<double> initGuess(spec.optimized_connection_order.size(), 1.0);
             const auto bounds = CA3::makeCA3OptimizationBounds(initGuess, cfg.optimizer.lower_scale, cfg.optimizer.upper_scale);
             auto ctx = CA3::buildCA3Network(cfg, initGuess);
             CA3::CA3Evaluator evaluator(std::move(ctx), &logger);
-            return runNMForRegion("CA3", cfg, evaluator, initGuess, bounds.lower, bounds.upper);
+            return runNMForRegion("CA3", cfg, evaluator, initGuess, bounds.lower, bounds.upper, spec.optimized_connection_order);
         } else if constexpr (user::kSelectedRegion == Region::CA1) {
             auto spec = CA1::makeCA1RegionSpec();
             OptimizationLogger logger(cfg.paths.output_dir, "CA1", 10);
             logger.reset();
             logger.writeEffectiveConfig(cfg);
             setGlobalOptimizationLogger(&logger);
-            registerEI(spec);
+            registerEI(spec, cfg);
 
             std::vector<double> initGuess(spec.optimized_connection_order.size(), 1.0);
             const auto bounds = CA1::makeCA1OptimizationBounds(initGuess, cfg.optimizer.lower_scale, cfg.optimizer.upper_scale);
             auto ctx = CA1::buildCA1Network(cfg, initGuess);
             CA1::CA1Evaluator evaluator(std::move(ctx), &logger);
-            return runNMForRegion("CA1", cfg, evaluator, initGuess, bounds.lower, bounds.upper);
+            return runNMForRegion("CA1", cfg, evaluator, initGuess, bounds.lower, bounds.upper, spec.optimized_connection_order);
         }
         return 1;
     } catch (const std::exception& e) {

@@ -7,9 +7,56 @@
 #include <functional>
 #include <random>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 namespace hippomodel::opt {
+
+
+inline void enforceEcPairGeometricLimit(
+    std::vector<double>& x,
+    const std::vector<double>& lowerBounds,
+    const std::vector<double>& upperBounds,
+    const std::vector<std::pair<int, int>>& ecPairs,
+    double EC_PAIR_MAX_RATIO)
+{
+    if (EC_PAIR_MAX_RATIO <= 1.0) return;
+
+    const double sqrtRatioMax = std::sqrt(EC_PAIR_MAX_RATIO);
+
+    for (const auto& pair : ecPairs) {
+        const int lecIdx = pair.first;
+        const int mecIdx = pair.second;
+
+        if (lecIdx < 0 || mecIdx < 0) continue;
+        if (static_cast<size_t>(lecIdx) >= x.size()) continue;
+        if (static_cast<size_t>(mecIdx) >= x.size()) continue;
+
+        double lec = x[lecIdx];
+        double mec = x[mecIdx];
+
+        if (lec <= 0.0 || mec <= 0.0) continue;
+
+        const double ratio = lec / mec;
+        if (ratio > EC_PAIR_MAX_RATIO) {
+            const double g = std::sqrt(lec * mec);  // preserve accumulated common-mode increase/decrease
+            lec = g * sqrtRatioMax;
+            mec = g / sqrtRatioMax;
+        } else if (ratio < 1.0 / EC_PAIR_MAX_RATIO) {
+            const double g = std::sqrt(lec * mec);  // preserve accumulated common-mode increase/decrease
+            lec = g / sqrtRatioMax;
+            mec = g * sqrtRatioMax;
+        } else {
+            continue;
+        }
+
+        lec = std::max(lowerBounds[lecIdx], std::min(lec, upperBounds[lecIdx]));
+        mec = std::max(lowerBounds[mecIdx], std::min(mec, upperBounds[mecIdx]));
+
+        x[lecIdx] = lec;
+        x[mecIdx] = mec;
+    }
+}
 
 inline std::vector<std::vector<double>> generateVerticesGDShift(
     const std::function<double(const std::vector<double>&, bool)>& func, // add
@@ -19,7 +66,9 @@ inline std::vector<std::vector<double>> generateVerticesGDShift(
     const std::vector<double>& lowerBounds,
     const std::vector<double>& upperBounds,
     std::vector<std::vector<double>>& outVertices,
-    std::vector<double>& outObjValues
+    std::vector<double>& outObjValues,
+    const std::vector<std::pair<int, int>>& ecPairs = {},
+    double EC_PAIR_MAX_RATIO = 1.5
     //double shiftDelta // = 0.3 //shift amount, fix as 0.3
     )
 {
@@ -207,6 +256,13 @@ inline std::vector<std::vector<double>> generateVerticesGDShift(
 
             x[j] = v;
         }
+
+        enforceEcPairGeometricLimit(
+            x,
+            lowerBounds,
+            upperBounds,
+            ecPairs,
+            EC_PAIR_MAX_RATIO);
 
         // evaluate objective
         double fval = func(x, /*count*/false);

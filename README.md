@@ -375,6 +375,52 @@ double upperScale = 10.0f;
 
 In the refactor, change them in `config/hippomodel.toml` unless you want to change the C++ default fallback.
 
+
+### Developer note: change EI-shifted initial-simplex generation
+
+This is mainly for developers who want to modify the Nelder-Mead initialization behavior, not for normal model-parameter tuning.
+
+Edit:
+
+```text
+include/hippomodel/optimizer/SimplexGenerator.h
+```
+
+The active EI-shifted initial simplex generator is:
+
+```cpp
+hippomodel::opt::generateVerticesGDShift(...)
+```
+
+Important developer parameters inside this file include:
+
+```cpp
+double p_move = 0.9;      // probability of moving even when firing rate is inside the target band
+const double dMed = 0.4;  // medium normalized FR-distance threshold
+const double dLarge = 0.95; // large normalized FR-distance threshold
+scale = 1.25;             // large outside-band EI shift
+scale = 1.15;             // medium outside-band EI shift
+scale = 1.1;              // small outside-band EI shift
+scale = 1.12;             // inside-band EI shift
+const double delta = 0.15; // Gaussian sampling band around shifted mean
+```
+
+The EC LEC/MEC pair ratio limit is passed from:
+
+```text
+src/workflow/OptimizeWorkflow.cpp
+```
+
+Look for:
+
+```cpp
+const double EC_PAIR_MAX_RATIO = 1.5;
+```
+
+This limits each matched LEC/MEC or LEC3/MEC3 pair to at most 1.5x difference during initial-simplex generation. The matching is name-based using `optimized_connection_order`, so DG, CA3, and CA1 can have different LEC/MEC indices without hard-coding the indices in `SimplexGenerator.h`.
+
+The ratio correction uses a geometric projection, so if both LEC and MEC have accumulated upward or downward changes, their common-mode effect is mostly preserved while their relative ratio is constrained.
+
 ### Change special per-connection optimization bounds
 
 Edit:

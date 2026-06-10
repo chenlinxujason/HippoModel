@@ -54,9 +54,9 @@ CA1RegionSpec makeCA1RegionSpec() {
         "CA3PC_CA1TL", "CA1PC_CA1TL", "CA1BisC_CA1TL", "CA1TL_CA1TL",
     };
 
-    spec.default_fr_targets = { {"CA1_PC", 2.6}, {"CA1_AAC", 7.85}, {"CA1_BC", 18.1}, {"CA1_BCCCK", 25.24}, {"CA1_BisC", 30.42}, {"CA1_NG", 8.0}, {"CA1_OLM", 17.3}, {"CA1_TL", 19.0} };
+    spec.default_fr_targets = { {"CA1_PC", 2.6}, {"CA1_AAC", 7.85}, {"CA1_BC", 21.0}, {"CA1_BCCCK", 8.8}, {"CA1_BisC", 30.42}, {"CA1_NG", 3.8}, {"CA1_OLM", 17.3}, {"CA1_TL", 19.0} };
 
-    spec.default_fr_bounds = { {"CA1_PC", {2.5, 3.59}}, {"CA1_AAC", {6.9, 8.8}}, {"CA1_BC", {10.07, 26.35}}, {"CA1_BCCCK", {15.3, 35.18}}, {"CA1_BisC", {18.7, 55.0}}, {"CA1_NG", {1.0, 30.44}}, {"CA1_OLM", {15.3, 22.3}}, {"CA1_TL", {7.0, 30.0}} };
+    spec.default_fr_bounds = { {"CA1_PC", {2.5, 3.59}}, {"CA1_AAC", {6.9, 8.8}}, {"CA1_BC", {6.5, 24.0}}, {"CA1_BCCCK", {4.6, 12.7}}, {"CA1_BisC", {18.7, 55.0}}, {"CA1_NG", {1.0, 30.44}}, {"CA1_OLM", {15.3, 22.3}}, {"CA1_TL", {7.0, 30.0}} };
 
     spec.ei_registrations = {
         {"CA1_PC", {0,1,2,3}, {4,5,6,7,8,9,10}},

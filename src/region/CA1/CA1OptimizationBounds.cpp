@@ -5,10 +5,9 @@
 #include <string>
 
 namespace hippomodel::CA1 {
-
 CA1OptimizationBounds makeCA1OptimizationBounds(const std::vector<double>& initGuess,
-                                                double lowerScale,
-                                                double upperScale) {
+                                            double lowerScale,
+                                            double upperScale) {
     const auto baselineWts = makeCA1BaselineWeights();
     const auto wt = [&](const std::string& name) -> double {
         const auto it = baselineWts.find(name);
@@ -18,39 +17,37 @@ CA1OptimizationBounds makeCA1OptimizationBounds(const std::vector<double>& initG
         return static_cast<double>(it->second);
     };
 
-    CA1OptimizationBounds bounds;
-
     // EC_LEC3 as PRE  (indices 0..4)
-        double lowerLEC3PC   = lowerScale * initGuess[0];  double upperLEC3PC   = 22 / wt("LEC3_CA1PC"); // 22/0.832, 24 reach AP (type1 modifieda), use 22/ as upper bound
-        double lowerLEC3AAC  = lowerScale * initGuess[1];  double upperLEC3AAC  = 43 / wt("LEC3_CA1AAC"); // 43/0.8, 45 reach AP, use 43/ as upper bound
-        double lowerLEC3BC   = lowerScale * initGuess[2];  double upperLEC3BC   = 26 / wt("LEC3_CA1BC"); // 26/0.37, 28 reach AP, use 26/ as upper bound
-        double lowerLEC3CCK  = lowerScale * initGuess[3];  double upperLEC3CCK  = 66 / wt("LEC3_CA1BCCCK"); // 66/0.9, 68 reach AP, use 66/ as upper bound
-        double lowerLEC3NG   = lowerScale * initGuess[4];  double upperLEC3NG   = 5 / wt("LEC3_CA1NG"); // 5/0.55, 7 reach AP, use 5/ as upper bound
+        double lowerLEC3PC   = lowerScale * initGuess[0];  double upperLEC3PC   = 18 / wt("LEC3_CA1PC");      // 18/0.9, 24 reach AP, use 18/ as upper bound
+        double lowerLEC3AAC  = lowerScale * initGuess[1];  double upperLEC3AAC  = 33 / wt("LEC3_CA1AAC");     // 33/0.8, 45 reach AP, use 33/ as upper bound
+        double lowerLEC3BC   = lowerScale * initGuess[2];  double upperLEC3BC   = 22 / wt("LEC3_CA1BC");      // 22/0.37, 28 reach AP, use 22/ as upper bound
+        double lowerLEC3CCK  = lowerScale * initGuess[3];  double upperLEC3CCK  = 60 / wt("LEC3_CA1BCCCK");   // 60/0.9, 68 reach AP, use 60/ as upper bound
+        double lowerLEC3NG   = lowerScale * initGuess[4];  double upperLEC3NG   = 5  / wt("LEC3_CA1NG");      // 5/0.55, 7 reach AP, use 5/ as upper bound
 
         // EC_MEC3 as PRE  (indices 5..9)
-        double lowerMEC3PC   = lowerScale * initGuess[5];  double upperMEC3PC   = 22 / wt("MEC3_CA1PC"); // 22/0.832, 24 reach AP (type1 modifieda), use 22/ as upper bound
-        double lowerMEC3AAC  = lowerScale * initGuess[6];  double upperMEC3AAC  = 43 / wt("MEC3_CA1AAC"); // 43/0.8, 45 reach AP, use 43/ as upper bound
-        double lowerMEC3BC   = lowerScale * initGuess[7];  double upperMEC3BC   = 26 / wt("MEC3_CA1BC"); // 26/0.37, 28 reach AP, use 26/ as upper bound
-        double lowerMEC3CCK  = lowerScale * initGuess[8];  double upperMEC3CCK  = 66 / wt("MEC3_CA1BCCCK"); // 66/0.9, 68 reach AP, use 66/ as upper bound
-        double lowerMEC3NG   = lowerScale * initGuess[9];  double upperMEC3NG   = 5 / wt("MEC3_CA1NG"); // 5/0.55, 7 reach AP, use 5/ as upper bound
-       
-       // CA3_PC as PRE  (indices 10..16)
-        double lowerCA3PC_PC  = lowerScale * initGuess[10]; double upperCA3PC_PC  = 19 / wt("CA3PC_CA1PC"); // 19/0.255, 21 reach AP (type1 modifieda), use 19/ as upper bound
-        double lowerCA3PC_AAC = lowerScale * initGuess[11]; double upperCA3PC_AAC = 43 / wt("CA3PC_CA1AAC"); // 43/2.72, 45 reach AP, use 43/ as upper bound
-        double lowerCA3PC_BC  = lowerScale * initGuess[12]; double upperCA3PC_BC  = 26 / wt("CA3PC_CA1BC"); // 26/1.42, 28 reach AP, use 26/ as upper bound
-        double lowerCA3PC_CCK = lowerScale * initGuess[13]; double upperCA3PC_CCK = 66 / wt("CA3PC_CA1BCCCK"); // 66/4.52, 68 reach AP, use 66/ as upper bound
-        double lowerCA3PC_BisC= lowerScale * initGuess[14]; double upperCA3PC_BisC= 31 / wt("CA3PC_CA1BisC"); // 31/3.89, 33 reach AP, use 31/ as upper bound
-        double lowerCA3PC_OLM = lowerScale * initGuess[15]; double upperCA3PC_OLM = 6 / wt("CA3PC_CA1OLM"); // 6/1.27, 8 reach AP, use 6/ as upper bound
-        double lowerCA3PC_TL  = lowerScale * initGuess[16]; double upperCA3PC_TL  = 3 / wt("CA3PC_CA1TL"); // 3/0.647, 5 reach AP, use 3/ as upper bound
+        double lowerMEC3PC   = lowerScale * initGuess[5];  double upperMEC3PC   = 18 / wt("MEC3_CA1PC");      // 18/0.9, 24 reach AP, use 18/ as upper bound
+        double lowerMEC3AAC  = lowerScale * initGuess[6];  double upperMEC3AAC  = 33 / wt("MEC3_CA1AAC");     // 33/0.8, 45 reach AP, use 33/ as upper bound
+        double lowerMEC3BC   = lowerScale * initGuess[7];  double upperMEC3BC   = 22 / wt("MEC3_CA1BC");      // 22/0.37, 28 reach AP, use 22/ as upper bound
+        double lowerMEC3CCK  = lowerScale * initGuess[8];  double upperMEC3CCK  = 60 / wt("MEC3_CA1BCCCK");   // 66/0.9, 68 reach AP, use 60/ as upper bound
+        double lowerMEC3NG   = lowerScale * initGuess[9];  double upperMEC3NG   = 5  / wt("MEC3_CA1NG");      // 5/0.55, 7 reach AP, use 5/ as upper bound
+
+        // CA3_PC as PRE  (indices 10..16)
+        double lowerCA3PC_PC   = lowerScale * initGuess[10];  double upperCA3PC_PC   = 19 / wt("CA3PC_CA1PC");      // 19/0.255, 21 reach AP, use 19/ as upper bound
+        double lowerCA3PC_AAC  = lowerScale * initGuess[11];  double upperCA3PC_AAC  = 33 / wt("CA3PC_CA1AAC");     // 33/2.72, 45 reach AP, use 33/ as upper bound
+        double lowerCA3PC_BC   = lowerScale * initGuess[12];  double upperCA3PC_BC   = 22 / wt("CA3PC_CA1BC");      // 22/1.42, 28 reach AP, use 22/ as upper bound
+        double lowerCA3PC_CCK  = lowerScale * initGuess[13];  double upperCA3PC_CCK  = 60 / wt("CA3PC_CA1BCCCK");   // 60/4.52, 68 reach AP, use 60/ as upper bound
+        double lowerCA3PC_BisC = lowerScale * initGuess[14];  double upperCA3PC_BisC = 28 / wt("CA3PC_CA1BisC");    // 28/3.89, 33 reach AP, use 28/ as upper bound
+        double lowerCA3PC_OLM  = lowerScale * initGuess[15];  double upperCA3PC_OLM  = 6  / wt("CA3PC_CA1OLM");     // 6/1.27, 8 reach AP, use 6/ as upper bound
+        double lowerCA3PC_TL   = lowerScale * initGuess[16];  double upperCA3PC_TL   = 3  / wt("CA3PC_CA1TL");      // 3/0.647, 5 reach AP, use 3/ as upper bound
 
         // CA1_PC as PRE  (indices 17..23)
-        double lowerCA1PC_PC  = lowerScale * initGuess[17]; double upperCA1PC_PC  = 17 / wt("CA1PC_CA1PC"); // 17/1.63, 19 reach AP (type1 modifieda), use 17/ as upper bound
-        double lowerCA1PC_AAC = lowerScale * initGuess[18]; double upperCA1PC_AAC = 43 / wt("CA1PC_CA1AAC"); // 43/7.75, 45 reach AP, use 43/ as upper bound
-        double lowerCA1PC_BC  = lowerScale * initGuess[19]; double upperCA1PC_BC  = 26 / wt("CA1PC_CA1BC"); // 26/2.84, 28 reach AP, use 26/ as upper bound
-        double lowerCA1PC_CCK = lowerScale * initGuess[20]; double upperCA1PC_CCK = 66 / wt("CA1PC_CA1BCCCK"); // 66/12.7, 68 reach AP, use 66/ as upper bound
-        double lowerCA1PC_BisC= lowerScale * initGuess[21]; double upperCA1PC_BisC= 31 / wt("CA1PC_CA1BisC"); // 31/5.23, 33 reach AP, use 31/ as upper bound
-        double lowerCA1PC_OLM = lowerScale * initGuess[22]; double upperCA1PC_OLM = 6 / wt("CA1PC_CA1OLM"); // 6/1.27, 8 reach AP, use 6/ as upper bound
-        double lowerCA1PC_TL  = lowerScale * initGuess[23]; double upperCA1PC_TL  = 3 / wt("CA1PC_CA1TL"); // 3/0.49, 5 reach AP, use 3/ as upper bound
+        double lowerCA1PC_PC   = lowerScale * initGuess[17];  double upperCA1PC_PC   = 15 / wt("CA1PC_CA1PC");      // 15/1.63, 19 reach AP, use 15/ as upper bound
+        double lowerCA1PC_AAC  = lowerScale * initGuess[18];  double upperCA1PC_AAC  = 35 / wt("CA1PC_CA1AAC");     // 35/7.75, 45 reach AP, use 35/ as upper bound
+        double lowerCA1PC_BC   = lowerScale * initGuess[19];  double upperCA1PC_BC   = 22 / wt("CA1PC_CA1BC");      // 22/2.84, 28 reach AP, use 22/ as upper bound
+        double lowerCA1PC_CCK  = lowerScale * initGuess[20];  double upperCA1PC_CCK  = 60 / wt("CA1PC_CA1BCCCK");   // 60/12.7, 68 reach AP, use 60/ as upper bound
+        double lowerCA1PC_BisC = lowerScale * initGuess[21];  double upperCA1PC_BisC = 28 / wt("CA1PC_CA1BisC");    // 28/5.23, 33 reach AP, use 28/ as upper bound
+        double lowerCA1PC_OLM  = lowerScale * initGuess[22];  double upperCA1PC_OLM  = 6  / wt("CA1PC_CA1OLM");     // 6/1.27, 8 reach AP, use 6/ as upper bound
+        double lowerCA1PC_TL   = lowerScale * initGuess[23];  double upperCA1PC_TL   = 3  / wt("CA1PC_CA1TL");      // 3/0.49, 5 reach AP, use 3/ as upper bound
 
         // CA1_AAC as PRE  (index 24)
         double lowerCA1AAC_PC = lowerScale * initGuess[24]; double upperCA1AAC_PC = upperScale * initGuess[24];
@@ -70,13 +67,13 @@ CA1OptimizationBounds makeCA1OptimizationBounds(const std::vector<double>& initG
         double lowerCA1CCK_BisC= lowerScale * initGuess[34]; double upperCA1CCK_BisC= upperScale * initGuess[34];
 
         // CA1_BisC as PRE  (indices 35..41) // use upper = 3.0
-        double lowerCA1BisC_PC   = lowerScale * initGuess[35]; double upperCA1BisC_PC   = 1.2 * initGuess[35];
-        double lowerCA1BisC_AAC  = lowerScale * initGuess[36]; double upperCA1BisC_AAC  = 3.0 * initGuess[36];
-        double lowerCA1BisC_BC   = lowerScale * initGuess[37]; double upperCA1BisC_BC   = 3.0 * initGuess[37];
-        double lowerCA1BisC_CCK  = lowerScale * initGuess[38]; double upperCA1BisC_CCK  = 3.0 * initGuess[38]; // BCCCK
-        double lowerCA1BisC_BisC = lowerScale * initGuess[39]; double upperCA1BisC_BisC = 1.2 * initGuess[39];// CA1 BisC
-        double lowerCA1BisC_OLM  = lowerScale * initGuess[40]; double upperCA1BisC_OLM  = 3.0 * initGuess[40];
-        double lowerCA1BisC_TL   = lowerScale * initGuess[41]; double upperCA1BisC_TL   = 1.2 * initGuess[41];
+        double lowerCA1BisC_PC   = lowerScale * initGuess[35]; double upperCA1BisC_PC   = upperScale * initGuess[35];//1.2
+        double lowerCA1BisC_AAC  = lowerScale * initGuess[36]; double upperCA1BisC_AAC  = upperScale * initGuess[36];
+        double lowerCA1BisC_BC   = lowerScale * initGuess[37]; double upperCA1BisC_BC   = upperScale * initGuess[37];
+        double lowerCA1BisC_CCK  = lowerScale * initGuess[38]; double upperCA1BisC_CCK  = upperScale * initGuess[38]; // BCCCK
+        double lowerCA1BisC_BisC = lowerScale * initGuess[39]; double upperCA1BisC_BisC = upperScale * initGuess[39];// CA1 BisC - 3.5
+        double lowerCA1BisC_OLM  = lowerScale * initGuess[40]; double upperCA1BisC_OLM  = upperScale * initGuess[40];
+        double lowerCA1BisC_TL   = lowerScale * initGuess[41]; double upperCA1BisC_TL   = upperScale * initGuess[41];//1.2
 
         // CA1_NG as PRE  (indices 42..46)
         double lowerCA1NG_PC  = lowerScale * initGuess[42]; double upperCA1NG_PC  = upperScale * initGuess[42];
@@ -93,13 +90,13 @@ CA1OptimizationBounds makeCA1OptimizationBounds(const std::vector<double>& initG
         double lowerCA1OLM_NG  = lowerScale * initGuess[51]; double upperCA1OLM_NG  = upperScale * initGuess[51];
 
         // CA1_TL as PRE  (indices 52..58) // use upper = 3.0
-        double lowerCA1TL_PC   = lowerScale * initGuess[52]; double upperCA1TL_PC   = 1.2 * initGuess[52];
-        double lowerCA1TL_AAC  = lowerScale * initGuess[53]; double upperCA1TL_AAC  = 3.0 * initGuess[53];
-        double lowerCA1TL_BC   = lowerScale * initGuess[54]; double upperCA1TL_BC   = 3.0 * initGuess[54];
-        double lowerCA1TL_CCK  = lowerScale * initGuess[55]; double upperCA1TL_CCK  = 3.0 * initGuess[55]; // BCCCK
-        double lowerCA1TL_BisC = lowerScale * initGuess[56]; double upperCA1TL_BisC = 1.2 * initGuess[56];
-        double lowerCA1TL_OLM  = lowerScale * initGuess[57]; double upperCA1TL_OLM  = 3.0 * initGuess[57];
-        double lowerCA1TL_TL   = lowerScale * initGuess[58]; double upperCA1TL_TL   = 1.2 * initGuess[58];
+        double lowerCA1TL_PC   = lowerScale * initGuess[52]; double upperCA1TL_PC   = upperScale * initGuess[52];//1.2
+        double lowerCA1TL_AAC  = lowerScale * initGuess[53]; double upperCA1TL_AAC  = upperScale * initGuess[53];
+        double lowerCA1TL_BC   = lowerScale * initGuess[54]; double upperCA1TL_BC   = upperScale * initGuess[54];
+        double lowerCA1TL_CCK  = lowerScale * initGuess[55]; double upperCA1TL_CCK  = upperScale * initGuess[55]; // BCCCK
+        double lowerCA1TL_BisC = lowerScale * initGuess[56]; double upperCA1TL_BisC = upperScale * initGuess[56];//3.5
+        double lowerCA1TL_OLM  = lowerScale * initGuess[57]; double upperCA1TL_OLM  = upperScale * initGuess[57];
+        double lowerCA1TL_TL   = lowerScale * initGuess[58]; double upperCA1TL_TL   = upperScale * initGuess[58];//1.2
 
         // ----------------------------------------------------------
         // Pack all bounds in CA1ConnectionNames order
@@ -173,6 +170,7 @@ CA1OptimizationBounds makeCA1OptimizationBounds(const std::vector<double>& initG
             upperCA1BisC_TL, upperCA1TL_TL
         };
 
+        CA1OptimizationBounds bounds;
         bounds.lower = lowerBounds;
         bounds.upper = upperBounds;
         return bounds;

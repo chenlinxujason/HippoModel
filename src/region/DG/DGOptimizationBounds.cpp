@@ -18,8 +18,6 @@ OptimizationBounds makeDGOptimizationBounds(const std::vector<double>& initGuess
         return static_cast<double>(it->second);
     };
 
-    // This function preserves the original DG NM per-connection scaling-factor bounds.
-    // The variable names and grouping follow main_largescalemodel_EC_DG_div(NMOpt).cpp.
 
     // ----------------------------------------------------------
     // EC_LEC as PRE (7)  baselineWts[0..6]

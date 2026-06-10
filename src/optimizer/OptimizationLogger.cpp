@@ -1,5 +1,6 @@
 #include "hippomodel/optimizer/OptimizationLogger.h"
 
+#include <algorithm>
 #include <cmath>
 #include <filesystem>
 #include <fstream>
@@ -48,27 +49,67 @@ void OptimizationLogger::cache(const EvaluationResult& result) {
 }
 
 const EvaluationResult* OptimizationLogger::findCached(const std::vector<double>& params, double total) const {
-    constexpr double kParamTol = 1e-8;
-    constexpr double kTotalAbsTol = 1e-7;
-    const EvaluationResult* best = nullptr;
+    // Match primarily by objective value, because NM stores simplex vertices in z-space
+    // and reconstructs x-space values before logging. That reconstruction can create
+    // small parameter differences even when the objective value is the same cached evaluation.
+    constexpr double kTotalAbsTol = 1e-5;
+    constexpr double kTotalRelTol = 1e-9;
+    constexpr double kParamWarnTol = 1e-5;
+
+    const double totalTol =
+        std::max(kTotalAbsTol, kTotalRelTol * std::max(1.0, std::abs(total)));
+
+    const EvaluationResult* bestMatch = nullptr;
+    double bestParamDiff = std::numeric_limits<double>::infinity();
     double bestTotalDiff = std::numeric_limits<double>::infinity();
+
     for (const auto& rec : cache_) {
-        if (maxAbsParamDiff(rec.params, params) > kParamTol) continue;
-        const double diff = std::abs(rec.total_loss - total);
-        if (diff < bestTotalDiff) {
-            best = &rec;
-            bestTotalDiff = diff;
+        const double totalDiff = std::abs(rec.total_loss - total);
+        if (totalDiff > totalTol) {
+            continue;
+        }
+
+        const double paramDiff = maxAbsParamDiff(rec.params, params);
+
+        // Among records with the same objective value, choose the closest parameter vector.
+        if (bestMatch == nullptr ||
+            paramDiff < bestParamDiff ||
+            (paramDiff == bestParamDiff && totalDiff < bestTotalDiff))
+        {
+            bestMatch = &rec;
+            bestParamDiff = paramDiff;
+            bestTotalDiff = totalDiff;
         }
     }
-    if (best != nullptr) {
-        const double totalTol = std::max(kTotalAbsTol, 1e-9 * std::max(1.0, std::abs(total)));
-        if (bestTotalDiff > totalTol) {
-            std::cerr << "[WARN] Found matching NM params, but cached total differs from NM runningBest: "
-                      << "cached=" << best->total_loss << ", runningBest=" << total
-                      << ", diff=" << bestTotalDiff << std::endl;
+
+    if (bestMatch == nullptr) {
+        double closestTotalDiff = std::numeric_limits<double>::infinity();
+        double closestParamDiff = std::numeric_limits<double>::infinity();
+
+        for (const auto& rec : cache_) {
+            closestTotalDiff = std::min(closestTotalDiff, std::abs(rec.total_loss - total));
+            closestParamDiff = std::min(closestParamDiff, maxAbsParamDiff(rec.params, params));
         }
+
+        std::cerr << "[ERROR] No cached NM evaluation matched: "
+                  << "requested total=" << total
+                  << ", closest total diff=" << closestTotalDiff
+                  << ", closest param diff=" << closestParamDiff
+                  << ", cache size=" << cache_.size()
+                  << std::endl;
+        return nullptr;
     }
-    return best;
+
+    if (bestParamDiff > kParamWarnTol) {
+        std::cerr << "[WARN] Cached NM evaluation matched by objective value, "
+                  << "but parameter vector differs: "
+                  << "total=" << total
+                  << ", total diff=" << bestTotalDiff
+                  << ", param diff=" << bestParamDiff
+                  << std::endl;
+    }
+
+    return bestMatch;
 }
 
 void OptimizationLogger::logInitialVertex(int iteration, const std::vector<double>& params, double total) {
@@ -94,18 +135,45 @@ void OptimizationLogger::logBestSoFar(int iteration, const std::vector<double>& 
     const EvaluationResult* rec = findCached(params, total);
     if (rec == nullptr) {
         std::cerr << "[ERROR] Cannot log NM best-so-far at iteration " << iteration
-                  << ": no cached evaluation matches the selected NM best point." << std::endl;
+                  << ": no cached evaluation matches the selected NM best point. "
+                  << "All logs for this iteration were skipped to avoid file misalignment."
+                  << std::endl;
         return;
     }
-    appendTrajectory(iteration, params, total, path("nelder_mead_output(" + region_ + "," + scaleLabel() + ")" + suffix() + ".txt"));
+
+    // Important:
+    // Write all files from the same cached objective evaluation.
+    // This keeps nelder_mead, FR, Corr, beta, and gamma logs aligned.
+    appendTrajectory(
+        iteration,
+        rec->params,
+        rec->total_loss,
+        path("nelder_mead_output(" + region_ + "," + scaleLabel() + ")" + suffix() + ".txt")
+    );
+
     logVectorPair(iteration, rec->ordered_mean_firing_rates, rec->ordered_firing_rate_errors, path(region_ + "_FR_and_Error(" + scaleLabel() + ")" + suffix() + ".txt"));
     logVectorPair(iteration, {rec->corr_mean_abs}, {rec->corr_error}, path(region_ + "_Corr_and_Error(" + scaleLabel() + ")" + suffix() + ".txt"));
     logVectorPair(iteration, {rec->beta_ratio}, {rec->beta_error}, path(region_ + "_betaR_and_Error(" + scaleLabel() + ")" + suffix() + ".txt"));
     logVectorPair(iteration, {rec->gamma_ratio}, {rec->gamma_error}, path(region_ + "_gammaR_and_Error(" + scaleLabel() + ")" + suffix() + ".txt"));
+
+    const double frMeanError =
+        rec->ordered_firing_rate_errors.empty()
+            ? std::numeric_limits<double>::quiet_NaN()
+            : std::accumulate(
+                  rec->ordered_firing_rate_errors.begin(),
+                  rec->ordered_firing_rate_errors.end(),
+                  0.0
+              ) / static_cast<double>(rec->ordered_firing_rate_errors.size());
+
+    const double oscError = rec->beta_error + rec->gamma_error;
+
     std::cout << "\n[NM BEST LOG] Iteration " << iteration
-              << " Current Best total error = " << total
-              << " = FRmean + Corr(" << rec->corr_error << ")"
-              << " + Osc [Beta(" << rec->beta_error << ") + Gamma(" << rec->gamma_error << ")]"
+              << " Current Best total error = " << rec->total_loss
+              << " = FRmean(" << frMeanError << ")"
+              << " + Corr(" << rec->corr_error << ")"
+              << " + Osc(" << oscError << ")"
+              << " [Beta(" << rec->beta_error
+              << ") + Gamma(" << rec->gamma_error << ")]"
               << std::endl;
 }
 

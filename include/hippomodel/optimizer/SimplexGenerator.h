@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hippomodel/optimizer/ProgressiveEI.h"
+#include "hippomodel/optimizer/DGCorrelationGuidance.h"
 
 #include <algorithm>
 #include <cmath>
@@ -122,6 +123,13 @@ inline std::vector<std::vector<double>> generateVerticesGDShift(
     outVertices.clear();
     outObjValues.clear();
 
+    // DG correlation-only indices for DGMC outgoing projections.
+    // Canonical DG order:
+    // DGMC_DGGC, DGMC_DGMC, DGMC_DGAAC, DGMC_DGBC, DGMC_DGHICAP, DGMC_DGHIPP.
+    // These are excluded from FR-guided EI shifts and controlled only by DGGC correlation.
+    const std::vector<int> dgmcCorrOnlyIndices =
+        (n == 67) ? std::vector<int>{2, 11, 17, 27, 46, 54} : std::vector<int>{};
+
     // -------------------------------------------------------------------------
     // Generate new vertices
     // -------------------------------------------------------------------------
@@ -176,6 +184,42 @@ inline std::vector<std::vector<double>> generateVerticesGDShift(
             }
         }
 
+        // Disable FR-guided shifts for DGMC outgoing projections.
+        // These parameters are reserved for the correlation-guided rule below.
+        for (int k : dgmcCorrOnlyIndices) {
+            if (k >= 0 && static_cast<size_t>(k) < n) {
+                dirScore[k] = 0.0;
+                f[k] = 0.5;
+                F_low[k] = 0.0;
+                F_high[k] = 1.0;
+            }
+        }
+
+        // DG correlation-guided rule for DGMC outgoing projections.
+        // corr too high -> decrease DGMC_*; corr too low -> increase DGMC_*.
+        double currentCorrMeanAbs = 0.0;
+        double targetCorrMeanAbs = 0.0;
+        if (!dgmcCorrOnlyIndices.empty() &&
+            ::opt::DGCorrelationGuidance::Get(currentCorrMeanAbs, targetCorrMeanAbs)) {
+            const double corrDeadband = 0.03 * targetCorrMeanAbs;
+            double corrDir = 0.0;
+
+            if (currentCorrMeanAbs > targetCorrMeanAbs + corrDeadband) {
+                corrDir = -1.0;
+            } else if (currentCorrMeanAbs < targetCorrMeanAbs - corrDeadband) {
+                corrDir = +1.0;
+            }
+
+            if (corrDir != 0.0) {
+                const double corrWeight = 2.0;
+                for (int k : dgmcCorrOnlyIndices) {
+                    if (k >= 0 && static_cast<size_t>(k) < n) {
+                        dirScore[k] += corrWeight * corrDir;
+                    }
+                }
+            }
+        }
+
         for (size_t j = 0; j < n; ++j) {
             const double L = lowerBounds[j];
             const double U = upperBounds[j];
@@ -191,8 +235,8 @@ inline std::vector<std::vector<double>> generateVerticesGDShift(
             //* Use normalized distance thresholds: d = |fr - bound| / (high - low); 
             // i.e, if a type’s band is narrow (0.4–0.9, width=0.5), being 0.5 Hz away is huge, d=1; if a type’s band is wide (15–30, width=15), being 0.5 Hz away is tiny, d=0.033
             // small: d<0.25; medium: 0.25-0.75; large, d>0.75
-            const double dMed   = 0.4;  // normalized distance thresholds
-            const double dLarge = 0.95;
+            const double dMed   = 0.35;  // normalized distance thresholds
+            const double dLarge = 0.85;
 
             double scale = 1.1; // default (will be overridden below if needed)
 
@@ -228,8 +272,8 @@ inline std::vector<std::vector<double>> generateVerticesGDShift(
             //----------------------------------------------------
             // Gaussian kernel width: 15% Gaussian sampling band
             //----------------------------------------------------
-            const double delta = 0.15; // 15% band (15% around mu)
-            const double sigma = 0.5 * delta * mu; // Gaussian width = μ*δ/2 such that μ±2σ ≈ [μ(1±δ)]
+            const double delta = 0.15; // δ, 15% band (15% around mu)
+            const double sigma = 0.5 * delta * mu; // Sigma is Gaussian width. Choose Gaussian width Sigma = mu * delta /2 such that mu ± 2sigma ≈ [μ(1±delta)], it makes +/-2sigma region matched desired +/- delta (δ, 15%) band
             double bandLo = std::max(L, mu * (1.0 - delta));
             double bandHi = std::min(U, mu * (1.0 + delta));
             if (bandLo > bandHi) std::swap(bandLo, bandHi);
